@@ -1,0 +1,33 @@
+{
+  "canisters": {
+    "in": {
+      "type": "pull",
+      "id": "zggm4-5qaaa-aaaai-qmjea-cai"
+    },
+    "tomic_backend": {
+      "main": "src/tomic_backend/main.mo",
+      "type": "motoko"
+    },
+    "tomic_frontend": {
+      "dependencies": [
+        "tomic_backend"
+      ],
+      "frontend": {
+        "entrypoint": "src/tomic_frontend/src/index.html"
+      },
+      "source": [
+        "src/tomic_frontend/assets",
+        "dist/tomic_frontend/"
+      ],
+      "type": "assets"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": "mops sources"
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}
