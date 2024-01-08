@@ -1,10 +1,9 @@
 import Principal "mo:base/Principal";
 import Text "mo:base/Text";
+import List "mo:base/List";
 import map "mo:stablehashmap/FunctionalStableHashMap";
 actor {
-  public query func greet(name : Text) : async Text {
-    return "Hello, " # name # "!";
-  };
+
   public type URL = Text;
   public type Name = Text;
   public type TimeStamp__1 = Int;
@@ -159,34 +158,54 @@ actor {
     updateCollection : shared (CollectionId, CollectionRequest) -> async Bool;
   };
   let actorClass = actor ("zggm4-5qaaa-aaaai-qmjea-cai") : NftActor;
-  stable var collectionMap = map.init<Principal, CollectionResponse>();
+  stable var collectionMap = map.init<Principal, List.List<CollectionId__1>>();
   stable var launchMap = map.init<Principal, ?LaunchResponse__1>();
 
   public func getPk() : async Nat {
     await actorClass.countSubaccounts();
   };
   public shared ({ caller = caller }) func collectionCreation(collectionData : CollectionRequest) : async ?CollectionResponse {
-    await actorClass.createCollection(collectionData);
-
-  };
-  public shared query ({ caller = caller }) func getPrincipal() : async Principal {
-    return caller;
-  };
-  public shared ({ caller = caller }) func getCollection(collectionId : CollectionId) : async ?CollectionResponse {
-
-    let collectionResponse = await actorClass.getCollection(collectionId);
+    let collectionResponse = await actorClass.createCollection(collectionData);
     switch (collectionResponse) {
       case (null) { null };
       case (?result) {
-        map.put<Principal, CollectionResponse>(collectionMap, Principal.equal, Principal.hash, caller, result);
+        let collectionId = result.collection_id;
+        var data = List.nil<CollectionId__1>();
+        switch (map.get<Principal, List.List<CollectionId__1>>(collectionMap, Principal.equal, Principal.hash, caller)) {
+          case (null) {
+            map.put<Principal, List.List<CollectionId__1>>(collectionMap, Principal.equal, Principal.hash, caller, List.push(collectionId, data));
+          };
+          case (?r) {
+            data := List.push<CollectionId__1>(collectionId, r);
+            map.put<Principal, List.List<CollectionId__1>>(collectionMap, Principal.equal, Principal.hash, caller, data);
+          };
+        };
+
         collectionResponse;
       };
     };
 
   };
-  public shared ({ caller = caller }) func updateCollection(collectionId : CollectionId, collectionRequest : CollectionRequest) : async Bool {
-    await actorClass.updateCollection(collectionId, collectionRequest);
+  // public shared query ({ caller = caller }) func getPrincipal() : async Principal {
+  //   return caller;
+  // };
+
+  public shared ({ caller = caller }) func getCollectionIds() : async ?[CollectionId__1] {
+    let listOfCollectionId : ?[CollectionId__1] = switch (map.get<Principal, List.List<CollectionId__1>>(collectionMap, Principal.equal, Principal.hash, caller)) {
+      case (null) { null };
+      case (?r) { ?List.toArray(r) };
+    };
   };
+
+  public shared ({ caller = caller }) func getCollection(collectionId : CollectionId) : async ?CollectionResponse {
+
+    await actorClass.getCollection(collectionId);
+  };
+
+  // public shared ({ caller = caller }) func updateCollection(collectionId : CollectionId, collectionRequest : CollectionRequest) : async Bool {
+  //   await actorClass.updateCollection(collectionId, collectionRequest);
+  // };
+
   public shared ({ caller = caller }) func launchCreate(launchRequest : LaunchRequest) : async ?LaunchResponse__1 {
     await actorClass.createLaunch(launchRequest);
   };
